@@ -84,11 +84,6 @@ impl CommandEnv {
             self.saw_path = true;
         }
     }
-
-    pub fn iter(&self) -> CommandEnvs<'_> {
-        let iter = self.vars.iter();
-        CommandEnvs { iter }
-    }
 }
 
 #[derive(Debug)]

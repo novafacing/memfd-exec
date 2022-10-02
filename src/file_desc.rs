@@ -1,8 +1,15 @@
+//! This essentially reimplements the code at:
+//! https://github.com/rust-lang/rust/blob/3fdd578d72a24d4efc2fe2ad18eec3b6ba72271e/library/std/src/sys/unix/fd.rs
+//! for external use to provide fds for sockets to perform Stdio to memfd_exec'ed processes.
+
 use libc::{self, off64_t};
 use std::{
     cmp,
-    io::{self, BorrowedCursor, IoSlice, IoSliceMut},
-    os::unix::io::OwnedFd,
+    io::{self, BorrowedCursor, IoSlice, IoSliceMut, Read},
+    os::unix::{
+        io::{AsFd, AsRawFd, FromRawFd, IntoRawFd, OwnedFd},
+        prelude::{BorrowedFd, RawFd},
+    },
 };
 
 use crate::cvt::cvt;
@@ -50,9 +57,6 @@ impl FileDesc {
     }
 
     pub fn read_at(&self, buf: &mut [u8], offset: u64) -> io::Result<usize> {
-        #[cfg(not(any(target_os = "linux", target_os = "android")))]
-        use libc::pread as pread64;
-        #[cfg(any(target_os = "linux", target_os = "android"))]
         use libc::pread64;
 
         unsafe {
@@ -110,9 +114,6 @@ impl FileDesc {
     }
 
     pub fn write_at(&self, buf: &[u8], offset: u64) -> io::Result<usize> {
-        #[cfg(not(any(target_os = "linux", target_os = "android")))]
-        use libc::pwrite as pwrite64;
-        #[cfg(any(target_os = "linux", target_os = "android"))]
         use libc::pwrite64;
 
         unsafe {
@@ -140,7 +141,6 @@ impl FileDesc {
             Ok(())
         }
     }
-    #[cfg(target_os = "linux")]
     pub fn set_nonblocking(&self, nonblocking: bool) -> io::Result<()> {
         unsafe {
             let v = nonblocking as libc::c_int;
@@ -158,29 +158,6 @@ impl FileDesc {
 impl<'a> Read for &'a FileDesc {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         (**self).read(buf)
-    }
-
-    #[inline]
-    unsafe fn initializer(&self) -> Initializer {
-        Initializer::nop()
-    }
-}
-
-impl AsInner<OwnedFd> for FileDesc {
-    fn as_inner(&self) -> &OwnedFd {
-        &self.0
-    }
-}
-
-impl IntoInner<OwnedFd> for FileDesc {
-    fn into_inner(self) -> OwnedFd {
-        self.0
-    }
-}
-
-impl FromInner<OwnedFd> for FileDesc {
-    fn from_inner(owned_fd: OwnedFd) -> Self {
-        Self(owned_fd)
     }
 }
 
