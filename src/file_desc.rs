@@ -1,5 +1,5 @@
 //! This essentially reimplements the code at:
-//! https://github.com/rust-lang/rust/blob/3fdd578d72a24d4efc2fe2ad18eec3b6ba72271e/library/std/src/sys/unix/fd.rs
+//! <https://github.com/rust-lang/rust/blob/3fdd578d72a24d4efc2fe2ad18eec3b6ba72271e/library/std/src/sys/unix/fd.rs>
 //! for external use to provide fds for sockets to perform Stdio to memfd_exec'ed processes.
 
 use libc::{self, off64_t};

@@ -1,5 +1,5 @@
 //! This basically implements Process from:
-//! https://github.com/rust-lang/rust/blob/master/library/std/src/sys/unix/process/process_unix.rs
+//! <https://github.com/rust-lang/rust/blob/master/library/std/src/sys/unix/process/process_unix.rs>
 
 use core::ffi::NonZero_c_int;
 use libc::c_int;

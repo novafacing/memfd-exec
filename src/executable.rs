@@ -1,8 +1,8 @@
 //! This essentially reimplements the code at:
 //! which is an internal implementation of the code at:
-//! https://github.com/rust-lang/rust/blob/master/library/std/src/process.rs
-//! https://github.com/rust-lang/rust/blob/master/library/std/src/sys/unix/process/process_unix.rs
-//! https://github.com/rust-lang/rust/blob/master/library/std/src/sys/unix/process/process_common.rs
+//! <https://github.com/rust-lang/rust/blob/master/library/std/src/process.rs>
+//! <https://github.com/rust-lang/rust/blob/master/library/std/src/sys/unix/process/process_unix.rs>
+//! <https://github.com/rust-lang/rust/blob/master/library/std/src/sys/unix/process/process_common.rs>
 //! for external use to provide a very similar interface to process::Command for in-memory executables
 
 use std::{
@@ -72,7 +72,7 @@ pub struct MemFdExecutable {
     /// using the `include_bytes!()` macro, or you can do fancy things like read it in from
     /// a socket.
     code: Vec<u8>,
-    /// The name of the program, this value is the argv[0] argument to the binary when
+    /// The name of the program, this value is the argv\[0\] argument to the binary when
     /// executed. If the program expects something specific here, that value should be
     /// used, otherwise any name will do
     program: CString,
@@ -127,7 +127,7 @@ fn construct_envp(env: BTreeMap<OsString, OsString>, saw_nul: &mut bool) -> Vec<
 
 impl MemFdExecutable {
     /// Create a new MemFdExecutable with the given name and code. The name is the name of the
-    /// program, and is used as the argv[0] argument to the program. The code is the binary
+    /// program, and is used as the argv\[0\] argument to the program. The code is the binary
     /// code to execute (usually, the entire contents of an ELF file).
     ///
     /// # Examples

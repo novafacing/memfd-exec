@@ -1,5 +1,47 @@
-//! This library provides essentially a single functionality to execute an in-memory executable
-//! as if it were a process::Command run normally from the filesystem
+//! This is a very simple crate that allows execution of in-memory only programs. Simply
+//! put, if you have the contents of a Linux executable in a `Vec<u8>`, you can use
+//! `memfd_exec` to execute the program without it ever touching your hard disk. Use
+//! cases for this may include:
+//!
+//! * Bundling a static executable with another program (for example, my motivation to
+//!   create this package is that I want to ship a statically built QEMU with
+//!   [cantrace](https://github.com/novafacing/cannoli))
+//! * Sending executables over the network and running them, to reduce footprint and increase
+//!   throughput
+//!
+//! # Example
+//!
+//! The following example will download and run a qemu-x86_64 executable from the internet,
+//! without ever writing the executable to disk.
+//!
+//! ```
+//! use reqwest::blocking::get;
+//! use memfd_exec::{MemFdExecutable, Stdio};
+//!
+//! const URL: &str = "https://novafacing.github.io/assets/qemu-x86_64";
+//! let resp = get(URL).unwrap();
+//!
+//! // The `MemFdExecutable` struct is at near feature-parity with `std::process::Command`,
+//! // so you can use it in the same way. The only difference is that you must provide the
+//! // executable contents as a `Vec<u8>` as well as telling it the argv[0] to use.
+//! let mut qemu = MemFdExecutable::new("qemu-x86_64", resp.bytes().unwrap().to_vec())
+//!     // We'll just get the version here, but you can do anything you want with the
+//!     // args.
+//!    .arg("-version")
+//!     // We'll capture the stdout of the process, so we need to set up a pipe.
+//!    .stdout(Stdio::piped())
+//!    // Spawn the process as a forked child
+//!    .spawn()
+//!    .unwrap();
+//!
+//! // Get the output and status code of the process (this will block until the process
+//! // exits)
+//! let output = qemu.wait_with_output().unwrap();
+//! assert!(output.status.success());
+//! // Print out the version we got!
+//! println!("{}", String::from_utf8_lossy(&output.stdout));
+//! ```
+//!
 #![feature(exact_size_is_empty)]
 #![feature(exit_status_error)]
 #![feature(raw_os_nonzero)]
