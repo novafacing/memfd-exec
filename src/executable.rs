@@ -149,12 +149,27 @@ impl MemFdExecutable {
     /// ```
     ///
     pub fn new<S: AsRef<OsStr>>(name: S, code: Vec<u8>) -> Self {
-        Self::_new(name.as_ref(), code)
+        let mut saw_nul = false;
+        let name = os2c(name.as_ref(), &mut saw_nul);
+        Self {
+            code,
+            program: name.clone(),
+            args: vec![name.clone()],
+            argv: Argv(vec![name]),
+            env: Default::default(),
+            cwd: None,
+            stdin: None,
+            stdout: None,
+            stderr: None,
+            saw_nul,
+        }
     }
 
     /// Add an argument to the program. This is equivalent to `Command::arg()`.
     pub fn arg<S: AsRef<OsStr>>(&mut self, arg: S) -> &mut Self {
-        self._arg(arg.as_ref());
+        let arg = os2c(arg.as_ref(), &mut self.saw_nul);
+        self.argv.0.push(arg.clone());
+        self.args.push(arg);
         self
     }
 
@@ -176,7 +191,7 @@ impl MemFdExecutable {
         K: AsRef<OsStr>,
         V: AsRef<OsStr>,
     {
-        self._env_mut().set(key.as_ref(), val.as_ref());
+        self.env_mut().set(key.as_ref(), val.as_ref());
         self
     }
 
@@ -188,26 +203,26 @@ impl MemFdExecutable {
         V: AsRef<OsStr>,
     {
         for (ref key, ref val) in vars {
-            self._env_mut().set(key.as_ref(), val.as_ref());
+            self.env_mut().set(key.as_ref(), val.as_ref());
         }
         self
     }
 
     /// Remove an environment variable from the program. This is equivalent to `Command::env_remove()`.
     pub fn env_remove<K: AsRef<OsStr>>(&mut self, key: K) -> &mut Self {
-        self._env_mut().remove(key.as_ref());
+        self.env_mut().remove(key.as_ref());
         self
     }
 
     /// Clear all environment variables from the program. This is equivalent to `Command::env_clear()`.
     pub fn env_clear(&mut self) -> &mut Self {
-        self._env_mut().clear();
+        self.env_mut().clear();
         self
     }
 
     /// Set the current working directory for the program. This is equivalent to `Command::current_dir()`.
     pub fn cwd<P: AsRef<Path>>(&mut self, dir: P) -> &mut Self {
-        self._cwd(dir.as_ref().as_ref());
+        self.cwd = Some(os2c(dir.as_ref().as_ref(), &mut self.saw_nul));
         self
     }
 
@@ -239,127 +254,77 @@ impl MemFdExecutable {
     /// });
     /// ```
     pub fn stdin<T: Into<Stdio>>(&mut self, cfg: T) -> &mut Self {
-        self._stdin(cfg.into());
+        self.stdin = Some(cfg.into());
         self
     }
 
+    /// Set the stdout handle for the program. This is equivalent to `Command::stdout()`. The
+    ///
+    /// # Arguments
+    /// * `cfg` - The configuration for the stdout handle. This will usually be one of the following:
+    ///     * `Stdio::inherit()` - Inherit the current process's stdout handle
+    ///     * `Stdio::piped()` - Create a pipe to the child process's stdout. This can be read
+    ///     * `Stdio::null()` - Discard all output to stdout
+    ///
+    /// # Examples
+    ///
+    /// This example creates a `cat` process that will read in the contents passed to its stdin handle
+    /// and read them from its stdout handle. The same methodology can be used to read from stderr/stdout.
+    ///
+    /// ```
+    /// use std::thread::spawn;
+    /// use std::io::{Read, Write};
+    ///
+    /// use memfd_exec::{MemFdExecutable, Stdio};
+    ///
+    /// let mut cat = MemFdCreate::new("cat", read("/bin/cat").unwrap())
+    ///     .stdin(Stdio::piped())
+    ///     .stdout(Stdio::piped())
+    ///     .spawn()
+    ///     .expect("failed to spawn cat");
+    ///
+    /// let mut cat_stdin = cat.stdin.take().expect("failed to open stdin");
+    /// let mut cat_stdout = cat.stdout.take().expect("failed to open stdout");
+    ///
+    /// spawn(move || {
+    ///    cat_stdin.write_all(b"hello world").expect("failed to write to stdin");
+    /// });
+    ///
+    /// let mut output = Vec::new();
+    /// cat_stdout.read_to_end(&mut output).expect("failed to read from stdout");
+    /// assert_eq!(output, b"hello world");
+    /// cat.wait().expect("failed to wait on cat");
+    /// ```
     pub fn stdout<T: Into<Stdio>>(&mut self, cfg: T) -> &mut Self {
-        self._stdout(cfg.into());
+        self.stdout = Some(cfg.into());
         self
     }
 
+    /// Set the stderr handle for the program. This is equivalent to `Command::stderr()`. The
+    ///
+    /// # Arguments
+    /// * `cfg` - The configuration for the stderr handle. This will usually be one of the following:
+    ///    * `Stdio::inherit()` - Inherit the current process's stderr handle
+    ///    * `Stdio::piped()` - Create a pipe to the child process's stderr. This can be read
+    ///    * `Stdio::null()` - Discard all output to stderr
     pub fn stderr<T: Into<Stdio>>(&mut self, cfg: T) -> &mut Self {
-        self._stderr(cfg.into());
+        self.stderr = Some(cfg.into());
         self
     }
 
     /// Spawn the program as a child process. This is equivalent to `Command::spawn()`.
     pub fn spawn(&mut self) -> Result<Child> {
-        self._spawn(Stdio::Inherit, true)
-    }
-
-    /// Spawn the program as a child process and wait for it to complete, obtaining the
-    /// output and exit status. This is equivalent to `Command::output()`.
-    pub fn output(&mut self) -> Result<Output> {
-        self.spawn()?.wait_with_output()
-    }
-
-    /// Spawn the program as a child process and wait for it to complete, obtaining the
-    /// exit status. This is equivalent to `Command::status()`.
-    pub fn status(&mut self) -> Result<ExitStatus> {
-        self.spawn()?.wait()
-    }
-
-    /// Create a new `Executable` from the given program name.
-    pub fn _new(name: &OsStr, code: Vec<u8>) -> Self {
-        let mut saw_nul = false;
-        let name = os2c(name, &mut saw_nul);
-        Self {
-            code,
-            program: name.clone(),
-            args: vec![name.clone()],
-            argv: Argv(vec![name]),
-            env: Default::default(),
-            cwd: None,
-            stdin: None,
-            stdout: None,
-            stderr: None,
-            saw_nul,
-        }
-    }
-
-    fn _set_program(&mut self, program: &OsStr) {
-        let arg = os2c(program, &mut self.saw_nul);
-        self.argv.0[0] = arg.clone();
-        self.args[0] = arg;
-    }
-
-    fn _arg(&mut self, arg: &OsStr) {
-        let arg = os2c(arg, &mut self.saw_nul);
-        self.argv.0.push(arg.clone());
-        self.args.push(arg);
-    }
-
-    fn _cwd(&mut self, dir: &OsStr) {
-        self.cwd = Some(os2c(dir, &mut self.saw_nul));
-    }
-
-    fn _stdin(&mut self, stdin: Stdio) {
-        self.stdin = Some(stdin);
-    }
-
-    fn _stdout(&mut self, stdout: Stdio) {
-        self.stdout = Some(stdout);
-    }
-
-    fn _stderr(&mut self, stderr: Stdio) {
-        self.stderr = Some(stderr);
-    }
-
-    fn _env_mut(&mut self) -> &mut CommandEnv {
-        &mut self.env
-    }
-
-    fn _setup_io(&self, default: Stdio, needs_stdin: bool) -> Result<(StdioPipes, ChildPipes)> {
-        let null = Stdio::Null;
-        let default_stdin = if needs_stdin { &default } else { &null };
-        let stdin = self.stdin.as_ref().unwrap_or(default_stdin);
-        let stdout = self.stdout.as_ref().unwrap_or(&default);
-        let stderr = self.stderr.as_ref().unwrap_or(&default);
-        let (their_stdin, our_stdin) = stdin.to_child_stdio(true)?;
-        let (their_stdout, our_stdout) = stdout.to_child_stdio(false)?;
-        let (their_stderr, our_stderr) = stderr.to_child_stdio(false)?;
-        let ours = StdioPipes {
-            stdin: our_stdin,
-            stdout: our_stdout,
-            stderr: our_stderr,
-        };
-        let theirs = ChildPipes {
-            stdin: their_stdin,
-            stdout: their_stdout,
-            stderr: their_stderr,
-        };
-        Ok((ours, theirs))
-    }
-
-    pub fn _saw_nul(&self) -> bool {
-        self.saw_nul
-    }
-
-    pub fn _get_cwd(&self) -> &Option<CString> {
-        &self.cwd
-    }
-
-    pub fn _spawn(&mut self, default: Stdio, needs_stdin: bool) -> Result<Child> {
+        let default = Stdio::Inherit;
+        let needs_stdin = true;
         const CLOEXEC_MSG_FOOTER: [u8; 4] = *b"NOEX";
 
-        let envp = self._capture_env();
+        let envp = self.capture_env();
 
-        if self._saw_nul() {
+        if self.saw_nul() {
             // TODO: Need err?
         }
 
-        let (ours, theirs) = self._setup_io(default, needs_stdin)?;
+        let (ours, theirs) = self.setup_io(default, needs_stdin)?;
 
         let (input, output) = anon_pipe()?;
 
@@ -374,11 +339,11 @@ impl MemFdExecutable {
         // forgets it to avoid unlocking it on a new thread, which would be invalid.
         // TODO: Yeah....I had to remove the env lock. Whoops! Don't multithread env with this
         // you insane person
-        let pid = unsafe { self._do_fork()? };
+        let pid = unsafe { self.do_fork()? };
 
         if pid == 0 {
             drop(input);
-            let Err(err) = (unsafe { self._do_exec(theirs, envp) }) else { unreachable!("..."); };
+            let Err(err) = (unsafe { self.do_exec(theirs, envp) }) else { unreachable!("..."); };
             panic!("failed to exec: {}", err);
         }
 
@@ -418,52 +383,116 @@ impl MemFdExecutable {
         }
     }
 
-    unsafe fn _do_fork(&mut self) -> Result<pid_t> {
+    /// Spawn the program as a child process and wait for it to complete, obtaining the
+    /// output and exit status. This is equivalent to `Command::output()`.
+    pub fn output(&mut self) -> Result<Output> {
+        self.spawn()?.wait_with_output()
+    }
+
+    /// Spawn the program as a child process and wait for it to complete, obtaining the
+    /// exit status. This is equivalent to `Command::status()`.
+    pub fn status(&mut self) -> Result<ExitStatus> {
+        self.spawn()?.wait()
+    }
+
+    /// Set the program name (argv\[0\]) to a new value.
+    ///
+    /// # Arguments
+    /// * `name` - The new name for the program. This will be used as the first argument
+    pub fn set_program(&mut self, program: &OsStr) {
+        let arg = os2c(program, &mut self.saw_nul);
+        self.argv.0[0] = arg.clone();
+        self.args[0] = arg;
+    }
+
+    fn env_mut(&mut self) -> &mut CommandEnv {
+        &mut self.env
+    }
+
+    fn setup_io(&self, default: Stdio, needs_stdin: bool) -> Result<(StdioPipes, ChildPipes)> {
+        let null = Stdio::Null;
+        let default_stdin = if needs_stdin { &default } else { &null };
+        let stdin = self.stdin.as_ref().unwrap_or(default_stdin);
+        let stdout = self.stdout.as_ref().unwrap_or(&default);
+        let stderr = self.stderr.as_ref().unwrap_or(&default);
+        let (their_stdin, our_stdin) = stdin.to_child_stdio(true)?;
+        let (their_stdout, our_stdout) = stdout.to_child_stdio(false)?;
+        let (their_stderr, our_stderr) = stderr.to_child_stdio(false)?;
+        let ours = StdioPipes {
+            stdin: our_stdin,
+            stdout: our_stdout,
+            stderr: our_stderr,
+        };
+        let theirs = ChildPipes {
+            stdin: their_stdin,
+            stdout: their_stdout,
+            stderr: their_stderr,
+        };
+        Ok((ours, theirs))
+    }
+
+    fn saw_nul(&self) -> bool {
+        self.saw_nul
+    }
+
+    /// Get the current working directory for the child process.
+    pub fn get_cwd(&self) -> &Option<CString> {
+        &self.cwd
+    }
+
+    unsafe fn do_fork(&mut self) -> Result<pid_t> {
         cvt(libc::fork())
     }
 
-    pub fn _capture_env(&mut self) -> Option<Vec<CString>> {
+    fn capture_env(&mut self) -> Option<Vec<CString>> {
         let maybe_env = self.env.capture_if_changed();
         maybe_env.map(|env| construct_envp(env, &mut self.saw_nul))
     }
 
-    pub fn _exec(&mut self, default: Stdio) -> Error {
-        let envp = self._capture_env();
+    /// Execute the command as a new process, replacing the current process.
+    ///
+    /// This function will not return.
+    ///
+    /// # Arguments
+    /// * `default` - The default stdio to use if the child process does not specify.
+    pub fn exec(&mut self, default: Stdio) -> Error {
+        let envp = self.capture_env();
 
-        if self._saw_nul() {
+        if self.saw_nul() {
             return Error::new(ErrorKind::InvalidInput, "nul byte found in provided data");
         }
 
-        match self._setup_io(default, true) {
+        match self.setup_io(default, true) {
             Ok((_, theirs)) => unsafe {
-                let Err(e) = self._do_exec(theirs, envp) else { unreachable!("..."); };
+                let Err(e) = self.do_exec(theirs, envp) else { unreachable!("..."); };
                 e
             },
             Err(e) => e,
         }
     }
 
-    pub fn _get_program_cstr(&self) -> &CStr {
+    /// Get the program name to use for the child process as a C string.
+    pub fn get_program_cstr(&self) -> &CStr {
         &*self.program
     }
 
-    pub fn _get_argv(&self) -> &Vec<CString> {
+    /// Get the program argv to use for the child process.
+    pub fn get_argv(&self) -> &Vec<CString> {
         &self.argv.0
     }
 
-    pub fn _env_saw_path(&self) -> bool {
+    /// Get whether PATH has been affected by changes to the environment variables
+    /// of this command.
+    pub fn env_saw_path(&self) -> bool {
         self.env.have_changed_path()
     }
 
-    pub fn _program_is_path(&self) -> bool {
+    /// Get whether the program (argv\[0\]) is a path, as opposed to a name.
+    pub fn program_is_path(&self) -> bool {
         self.program.to_bytes().contains(&b'/')
     }
 
-    unsafe fn _do_exec(
-        &mut self,
-        stdio: ChildPipes,
-        maybe_envp: Option<Vec<CString>>,
-    ) -> Result<!> {
+    unsafe fn do_exec(&mut self, stdio: ChildPipes, maybe_envp: Option<Vec<CString>>) -> Result<!> {
         if let Some(fd) = stdio.stdin.fd() {
             cvt_r(|| libc::dup2(fd, libc::STDIN_FILENO))?;
         }
@@ -474,7 +503,7 @@ impl MemFdExecutable {
             cvt_r(|| libc::dup2(fd, libc::STDERR_FILENO))?;
         }
 
-        if let Some(ref cwd) = *self._get_cwd() {
+        if let Some(ref cwd) = *self.get_cwd() {
             cvt(libc::chdir(cwd.as_ptr()))?;
         }
 
@@ -523,7 +552,7 @@ impl MemFdExecutable {
         }
 
         let argv = self
-            ._get_argv()
+            .get_argv()
             .iter()
             .map(|s| s.as_c_str())
             .collect::<Vec<_>>();

@@ -28,10 +28,15 @@ pub enum ChildStdio {
     Owned(FileDesc),
 }
 
+/// Description of a stdio stream for a child process
 pub enum Stdio {
+    /// Inherit the parent's stdio stream
     Inherit,
+    /// Use a null stream, like /dev/null
     Null,
+    /// Use a pipe to the input or output of the child process
     MakePipe,
+    /// Use an existing file descriptor as the stdio stream
     Fd(FileDesc),
 }
 

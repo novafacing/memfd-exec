@@ -3,10 +3,14 @@ use std::str::from_utf8;
 
 use crate::process::ExitStatus;
 
+/// The output of a child process, including the exit status and output streams.
 #[derive(PartialEq, Clone, Eq)]
 pub struct Output {
+    /// The exit status of the child process
     pub status: ExitStatus,
+    /// The data that the child process wrote to stdout
     pub stdout: Vec<u8>,
+    /// The data that the child process wrote to stderr
     pub stderr: Vec<u8>,
 }
 

@@ -6,10 +6,14 @@ use crate::output::Output;
 use crate::process::{ExitStatus, Process};
 use crate::stdio::StdioPipes;
 
+/// A child process created from a `MemFdExecutable` with handles to input and output streams
 pub struct Child {
-    pub handle: Process,
+    handle: Process,
+    /// The input stream to the child process
     pub stdin: Option<ChildStdin>,
+    /// The output stream from the child process
     pub stdout: Option<ChildStdout>,
+    /// The error stream from the child process
     pub stderr: Option<ChildStderr>,
 }
 
@@ -23,23 +27,29 @@ impl Child {
         }
     }
 
+    /// Kill the child process
     pub fn kill(&mut self) -> Result<()> {
         self.handle.kill()
     }
 
+    /// Return the id of the child process, probably a PID
     pub fn id(&self) -> u32 {
         self.handle.id()
     }
 
+    /// Wait for the child process to exit, returning the exit status code
     pub fn wait(&mut self) -> Result<ExitStatus> {
         drop(self.stdin.take());
         self.handle.wait()
     }
 
+    /// Try and wait for the child process to exit, returning the exit status code if it has
     pub fn try_wait(&mut self) -> Result<Option<ExitStatus>> {
         self.handle.try_wait()
     }
 
+    /// Wait for the child process to exit, returning the exit status code and the output
+    /// streams
     pub fn wait_with_output(mut self) -> Result<Output> {
         drop(self.stdin.take());
 
