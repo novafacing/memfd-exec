@@ -15,8 +15,8 @@
 //! without ever writing the executable to disk.
 //!
 //! ```
-//! use reqwest::blocking::get;
 //! use memfd_exec::{MemFdExecutable, Stdio};
+//! use reqwest::blocking::get;
 //!
 //! const URL: &str = "https://novafacing.github.io/assets/qemu-x86_64";
 //! let resp = get(URL).unwrap();
@@ -24,20 +24,20 @@
 //! // The `MemFdExecutable` struct is at near feature-parity with `std::process::Command`,
 //! // so you can use it in the same way. The only difference is that you must provide the
 //! // executable contents as a `Vec<u8>` as well as telling it the argv[0] to use.
-//! let mut qemu = MemFdExecutable::new("qemu-x86_64", resp.bytes().unwrap().to_vec())
+//! let qemu = MemFdExecutable::new("qemu-x86_64", resp.bytes().unwrap().to_vec())
 //!     // We'll just get the version here, but you can do anything you want with the
 //!     // args.
-//!    .arg("-version")
+//!     .arg("-version")
 //!     // We'll capture the stdout of the process, so we need to set up a pipe.
-//!    .stdout(Stdio::piped())
-//!    // Spawn the process as a forked child
-//!    .spawn()
-//!    .unwrap();
+//!     .stdout(Stdio::piped())
+//!     // Spawn the process as a forked child
+//!     .spawn()
+//!     .unwrap();
 //!
 //! // Get the output and status code of the process (this will block until the process
 //! // exits)
 //! let output = qemu.wait_with_output().unwrap();
-//! assert!(output.status.success());
+//! assert!(output.status.into_raw() == 0);
 //! // Print out the version we got!
 //! println!("{}", String::from_utf8_lossy(&output.stdout));
 //! ```
