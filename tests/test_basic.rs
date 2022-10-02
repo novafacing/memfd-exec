@@ -52,8 +52,8 @@ fn test_cat_stdin() {
     );
 }
 
-const TEST_STATIC_EXE: &[u8] = include_bytes!("test_static.bin");
-const TEST_DYN_EXE: &[u8] = include_bytes!("test_dynamic.bin");
+const TEST_STATIC_EXE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "test_static.bin"));
+const TEST_DYN_EXE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "test_dynamic.bin"));
 
 #[test]
 fn test_static_included() {

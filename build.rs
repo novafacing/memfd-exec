@@ -1,4 +1,4 @@
-use std::{fs::read, io::Write, process::Command, thread::spawn};
+use std::{env::var, fs::read, io::Write, process::Command, thread::spawn};
 
 fn build_test_static() {
     let mut clang = Command::new("clang")
@@ -6,7 +6,7 @@ fn build_test_static() {
         .arg("c")
         .arg("-static")
         .arg("-o")
-        .arg(env!("CARGO_MANIFEST_DIR").to_owned() + "/tests/test_static.bin")
+        .arg(var("OUT_DIR").unwrap() + "test_static.bin")
         .arg("-")
         .stdin(std::process::Stdio::piped())
         .spawn()
@@ -28,7 +28,7 @@ fn build_test_dynamic() {
         .arg("-x")
         .arg("c")
         .arg("-o")
-        .arg(env!("CARGO_MANIFEST_DIR").to_owned() + "/tests/test_dynamic.bin")
+        .arg(var("OUT_DIR").unwrap() + "test_dynamic.bin")
         .arg("-")
         .stdin(std::process::Stdio::piped())
         .spawn()
