@@ -8,6 +8,8 @@ use std::{
     time::Duration,
 };
 
+use serial_test::serial;
+
 use memfd_exec::{MemFdExecutable, Stdio};
 
 #[test]
@@ -56,6 +58,7 @@ const TEST_STATIC_EXE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "test_sta
 const TEST_DYN_EXE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "test_dynamic.bin"));
 
 #[test]
+#[serial]
 fn test_static_included() {
     const PORT: u32 = 5432;
     let test_static = MemFdExecutable::new("test_static.bin", TEST_STATIC_EXE.to_vec())
@@ -88,6 +91,7 @@ fn test_static_included() {
 }
 
 #[test]
+#[serial]
 fn test_dynamic_included() {
     const PORT: u32 = 2345;
     let test_static = MemFdExecutable::new("test_dynamic.bin", TEST_DYN_EXE.to_vec())

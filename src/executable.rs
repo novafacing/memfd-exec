@@ -273,11 +273,12 @@ impl MemFdExecutable {
     ///
     /// ```
     /// use std::thread::spawn;
+    /// use std::fs::read;
     /// use std::io::{Read, Write};
     ///
     /// use memfd_exec::{MemFdExecutable, Stdio};
     ///
-    /// let mut cat = MemFdCreate::new("cat", read("/bin/cat").unwrap())
+    /// let mut cat = MemFdExecutable::new("cat", read("/bin/cat").unwrap())
     ///     .stdin(Stdio::piped())
     ///     .stdout(Stdio::piped())
     ///     .spawn()
