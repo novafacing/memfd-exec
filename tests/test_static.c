@@ -5,7 +5,10 @@
 
 /* Listen on port 1234 for a connection and print out the data received. */
 int main(int argc, char **argv) {
-  int port = 1234;
+  if (argc != 2) {
+    fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+  }
+  int port = atoi(argv[1]);
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   struct sockaddr_in addr;
   addr.sin_family = AF_INET;

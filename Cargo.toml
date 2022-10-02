@@ -2,6 +2,10 @@
 name = "memfd-exec"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
+description = "Run an executable directly from memory with a friendly interface."
+repository = "https://github.com/novafacing/memfd-exec.git"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

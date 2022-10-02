@@ -41,7 +41,7 @@ use crate::{
 /// sneakily, or (the real reason) for bundling executables that are a pain to set up and
 /// compile, but whose static versions are very portable. Here's a "sneaky" example:
 ///
-/// ```no_run
+/// ```no_compile
 /// use memfd_exec::{MemFdExecutable, Stdio};
 ///
 /// // You can include the entirety of a binary (for example, nc)
@@ -134,13 +134,12 @@ impl MemFdExecutable {
     ///
     /// You can run code that is included directly in your executable with `include_bytes!()`:
     ///
-    /// ```no_run
-    ///
+    /// ```no_compile
     /// use memfd_exec::MemFdExecutable;
     ///
     /// let code = include_bytes!("/usr/bin/nc-static");
     ///
-    /// let mut cmd = MemFdExecutable::new("nc", code);
+    /// let mut cmd = MemFdExecutable::new("nc", code)
     ///     .arg("-l")
     ///     .arg("1234")
     ///     .arg("-e")
@@ -224,6 +223,7 @@ impl MemFdExecutable {
     ///
     /// ```no_run
     /// use std::thread::spawn;
+    /// use std::io::Write;
     ///
     /// use memfd_exec::{MemFdExecutable, Stdio};
     ///
