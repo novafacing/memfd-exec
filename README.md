@@ -1,4 +1,4 @@
-# memfd_exec
+# memfd_exec ![crates.io](https://img.shields.io/crates/v/memfd-exec.svg)
 
 This is a very simple crate that allows execution of in-memory only programs. Simply
 put, if you have the contents of a Linux executable in a `Vec<u8>`, you can use
