@@ -5,7 +5,7 @@
 use libc::{self, off64_t};
 use std::{
     cmp,
-    io::{self, BorrowedCursor, IoSlice, IoSliceMut, Read},
+    io::{self, IoSlice, IoSliceMut, Read},
     os::unix::{
         io::{AsFd, AsRawFd, FromRawFd, IntoRawFd, OwnedFd},
         prelude::{BorrowedFd, RawFd},
@@ -68,22 +68,6 @@ impl FileDesc {
             ))
             .map(|n| n as usize)
         }
-    }
-
-    pub fn read_buf(&self, mut cursor: BorrowedCursor<'_>) -> io::Result<()> {
-        let ret = cvt(unsafe {
-            libc::read(
-                self.as_raw_fd(),
-                cursor.as_mut().as_mut_ptr() as *mut libc::c_void,
-                cmp::min(cursor.capacity(), READ_LIMIT),
-            )
-        })?;
-
-        // Safety: `ret` bytes were written to the initialized portion of the buffer
-        unsafe {
-            cursor.advance(ret as usize);
-        }
-        Ok(())
     }
 
     pub fn write(&self, buf: &[u8]) -> io::Result<usize> {

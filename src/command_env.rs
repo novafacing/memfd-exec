@@ -107,7 +107,4 @@ impl<'a> ExactSizeIterator for CommandEnvs<'a> {
     fn len(&self) -> usize {
         self.iter.len()
     }
-    fn is_empty(&self) -> bool {
-        self.iter.is_empty()
-    }
 }

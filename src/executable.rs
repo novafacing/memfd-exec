@@ -493,7 +493,11 @@ impl MemFdExecutable {
         self.program.to_bytes().contains(&b'/')
     }
 
-    unsafe fn do_exec(&mut self, stdio: ChildPipes, maybe_envp: Option<Vec<CString>>) -> Result<!> {
+    unsafe fn do_exec(
+        &mut self,
+        stdio: ChildPipes,
+        maybe_envp: Option<Vec<CString>>,
+    ) -> Result<()> {
         if let Some(fd) = stdio.stdin.fd() {
             cvt_r(|| libc::dup2(fd, libc::STDIN_FILENO))?;
         }

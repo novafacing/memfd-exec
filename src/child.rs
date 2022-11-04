@@ -86,10 +86,6 @@ impl Write for ChildStdin {
         (&*self).write_vectored(bufs)
     }
 
-    fn is_write_vectored(&self) -> bool {
-        Write::is_write_vectored(&&*self)
-    }
-
     fn flush(&mut self) -> Result<()> {
         (&*self).flush()
     }
@@ -106,10 +102,6 @@ impl Write for &ChildStdin {
 
     fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> Result<usize> {
         self.0.write_vectored(bufs)
-    }
-
-    fn is_write_vectored(&self) -> bool {
-        self.0.is_write_vectored()
     }
 
     fn flush(&mut self) -> Result<()> {
@@ -150,10 +142,6 @@ impl Write for ChildStdout {
         (&*self).write_vectored(bufs)
     }
 
-    fn is_write_vectored(&self) -> bool {
-        Write::is_write_vectored(&&*self)
-    }
-
     fn flush(&mut self) -> Result<()> {
         (&*self).flush()
     }
@@ -170,10 +158,6 @@ impl Write for &ChildStdout {
 
     fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> Result<usize> {
         self.0.write_vectored(bufs)
-    }
-
-    fn is_write_vectored(&self) -> bool {
-        self.0.is_write_vectored()
     }
 
     fn flush(&mut self) -> Result<()> {
@@ -207,10 +191,6 @@ impl Read for ChildStdout {
         (&*self).read_vectored(bufs)
     }
 
-    fn is_read_vectored(&self) -> bool {
-        Read::is_read_vectored(&&*self)
-    }
-
     fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
         (&*self).read_to_end(buf)
     }
@@ -223,10 +203,6 @@ impl Read for &ChildStdout {
 
     fn read_vectored(&mut self, bufs: &mut [IoSliceMut<'_>]) -> Result<usize> {
         self.0.read_vectored(bufs)
-    }
-
-    fn is_read_vectored(&self) -> bool {
-        self.0.is_read_vectored()
     }
 
     fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
@@ -250,10 +226,6 @@ impl Write for ChildStderr {
         (&*self).write_vectored(bufs)
     }
 
-    fn is_write_vectored(&self) -> bool {
-        Write::is_write_vectored(&&*self)
-    }
-
     fn flush(&mut self) -> Result<()> {
         (&*self).flush()
     }
@@ -270,10 +242,6 @@ impl Write for &ChildStderr {
 
     fn write_vectored(&mut self, bufs: &[IoSlice<'_>]) -> Result<usize> {
         self.0.write_vectored(bufs)
-    }
-
-    fn is_write_vectored(&self) -> bool {
-        self.0.is_write_vectored()
     }
 
     fn flush(&mut self) -> Result<()> {
@@ -307,10 +275,6 @@ impl Read for ChildStderr {
         (&*self).read_vectored(bufs)
     }
 
-    fn is_read_vectored(&self) -> bool {
-        Read::is_read_vectored(&&*self)
-    }
-
     fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {
         (&*self).read_to_end(buf)
     }
@@ -323,10 +287,6 @@ impl Read for &ChildStderr {
 
     fn read_vectored(&mut self, bufs: &mut [IoSliceMut<'_>]) -> Result<usize> {
         self.0.read_vectored(bufs)
-    }
-
-    fn is_read_vectored(&self) -> bool {
-        self.0.is_read_vectored()
     }
 
     fn read_to_end(&mut self, buf: &mut Vec<u8>) -> Result<usize> {

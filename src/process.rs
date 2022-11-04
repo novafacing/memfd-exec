@@ -1,7 +1,6 @@
 //! This basically implements Process from:
 //! <https://github.com/rust-lang/rust/blob/master/library/std/src/sys/unix/process/process_unix.rs>
 
-use core::ffi::NonZero_c_int;
 use libc::c_int;
 use std::fmt::{Debug, Formatter, Result as FmtResult};
 use std::io::{Error, Result};
@@ -88,7 +87,7 @@ impl ExitStatus {
         // https://pubs.opengroup.org/onlinepubs/9699919799/functions/wait.html .  If it is not
         // true for a platform pretending to be Unix, the tests (our doctests, and also
         // procsss_unix/tests.rs) will spot it.  `ExitStatusError::code` assumes this too.
-        match NonZero_c_int::try_from(self.0) {
+        match c_int::try_from(self.0) {
             /* was nonzero */
             Ok(failure) => Err(Error::new(
                 std::io::ErrorKind::Other,
@@ -131,7 +130,7 @@ impl From<c_int> for ExitStatus {
 }
 
 #[derive(PartialEq, Eq, Clone, Copy)]
-pub struct ExitStatusError(NonZero_c_int);
+pub struct ExitStatusError(c_int);
 
 impl Into<ExitStatus> for ExitStatusError {
     fn into(self) -> ExitStatus {

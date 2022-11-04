@@ -42,12 +42,12 @@
 //! println!("{}", String::from_utf8_lossy(&output.stdout));
 //! ```
 //!
-#![feature(exact_size_is_empty)]
-#![feature(exit_status_error)]
-#![feature(raw_os_nonzero)]
-#![feature(read_buf)]
-#![feature(can_vector)]
-#![feature(never_type)]
+// #![feature(exact_size_is_empty)]
+// #![feature(exit_status_error)]
+// #![feature(raw_os_nonzero)]
+// #![feature(read_buf)]
+// #![feature(can_vector)]
+// #![feature(never_type)]
 
 mod anon_pipe;
 mod child;
