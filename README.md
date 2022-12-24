@@ -15,7 +15,7 @@ cases for this may include:
 
 ## Using
 
-Just include `memfd-exec = "0.1.3"` in your `Cargo.toml` file.
+Just include `memfd-exec = "0.1.4"` in your `Cargo.toml` file.
 
 ## Features
 
