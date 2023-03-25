@@ -5,21 +5,11 @@ use std::env;
 use std::ffi::{OsStr, OsString};
 
 // Stores a set of changes to an environment
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct CommandEnv {
     clear: bool,
     saw_path: bool,
     vars: BTreeMap<OsString, Option<OsString>>,
-}
-
-impl Default for CommandEnv {
-    fn default() -> Self {
-        CommandEnv {
-            clear: false,
-            saw_path: false,
-            vars: Default::default(),
-        }
-    }
 }
 
 impl CommandEnv {
@@ -28,14 +18,17 @@ impl CommandEnv {
         let mut result = BTreeMap::<OsString, OsString>::new();
         if !self.clear {
             for (k, v) in env::vars_os() {
-                result.insert(k.into(), v);
+                result.insert(k, v);
             }
         }
         for (k, maybe_v) in &self.vars {
-            if let &Some(ref v) = maybe_v {
-                result.insert(k.clone(), v.clone());
-            } else {
-                result.remove(k);
+            match maybe_v {
+                Some(v) => {
+                    result.insert(k.clone(), v.clone());
+                }
+                _ => {
+                    result.remove(k);
+                }
             }
         }
         result

@@ -87,13 +87,15 @@ impl ExitStatus {
         // https://pubs.opengroup.org/onlinepubs/9699919799/functions/wait.html .  If it is not
         // true for a platform pretending to be Unix, the tests (our doctests, and also
         // procsss_unix/tests.rs) will spot it.  `ExitStatusError::code` assumes this too.
+        #[allow(clippy::useless_conversion)]
         match c_int::try_from(self.0) {
             /* was nonzero */
             Ok(failure) => Err(Error::new(
                 std::io::ErrorKind::Other,
                 format!("process exited with status {}", failure),
             )),
-            /* was zero, couldn't convert */ Err(_) => Ok(()),
+            /* was zero, couldn't convert */
+            Err(_) => Ok(()),
         }
     }
 
@@ -117,6 +119,7 @@ impl ExitStatus {
         libc::WIFCONTINUED(self.0)
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn into_raw(&self) -> c_int {
         self.0
     }
@@ -132,9 +135,9 @@ impl From<c_int> for ExitStatus {
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct ExitStatusError(c_int);
 
-impl Into<ExitStatus> for ExitStatusError {
-    fn into(self) -> ExitStatus {
-        ExitStatus(self.0.into())
+impl From<ExitStatusError> for ExitStatus {
+    fn from(val: ExitStatusError) -> Self {
+        ExitStatus(val.0)
     }
 }
 

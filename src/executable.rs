@@ -474,7 +474,7 @@ impl MemFdExecutable {
 
     /// Get the program name to use for the child process as a C string.
     pub fn get_program_cstr(&self) -> &CStr {
-        &*self.program
+        &self.program
     }
 
     /// Get the program argv to use for the child process.
