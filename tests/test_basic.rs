@@ -2,13 +2,13 @@
 
 use std::{
     fs::read,
-    io::{Write, Read},
+    io::{Read, Write},
     net::{SocketAddr, TcpStream},
     path::PathBuf,
     process::{Command, Stdio as ProcessStdio},
+    str,
     thread::{sleep, spawn},
     time::Duration,
-    str,
 };
 
 use serial_test::serial;
@@ -23,10 +23,13 @@ fn build_test_static() {
         .arg("-x")
         .arg("c")
         .arg("-static")
+        .arg("-v")
         .arg("-o")
         .arg(PathBuf::from(CARGO_TARGET_TMPDIR).join("test_static.bin"))
         .arg("-")
         .stdin(ProcessStdio::piped())
+        .stdout(ProcessStdio::piped())
+        .stderr(ProcessStdio::piped())
         .spawn()
         .expect("Failed to run clang");
 
@@ -38,7 +41,14 @@ fn build_test_static() {
             .expect("Could not write to clang stdin");
     });
 
-    clang.wait_with_output().expect("Failed to run clang");
+    let output = clang.wait_with_output().expect("Failed to run clang");
+
+    assert!(
+        output.status.success(),
+        "Failed to compile static test:\nstdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
 }
 
 fn build_test_dynamic() {
@@ -49,6 +59,8 @@ fn build_test_dynamic() {
         .arg(PathBuf::from(CARGO_TARGET_TMPDIR).join("test_dynamic.bin"))
         .arg("-")
         .stdin(ProcessStdio::piped())
+        .stdout(ProcessStdio::piped())
+        .stderr(ProcessStdio::piped())
         .spawn()
         .expect("Failed to run clang");
 
@@ -60,7 +72,14 @@ fn build_test_dynamic() {
             .expect("Could not write to clang stdin");
     });
 
-    clang.wait_with_output().expect("Failed to run clang");
+    let output = clang.wait_with_output().expect("Failed to run clang");
+
+    assert!(
+        output.status.success(),
+        "Failed to compile static test:\nstdout: {}\nstderr: {}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
 }
 
 #[test]
@@ -122,7 +141,12 @@ fn test_static_included() {
 
     let port = {
         let mut array = [0u8; 32];
-        let len = test_static.stdout.as_ref().unwrap().read(&mut array).unwrap();
+        let len = test_static
+            .stdout
+            .as_ref()
+            .unwrap()
+            .read(&mut array)
+            .unwrap();
         let port: u16 = str::from_utf8(&array[..len]).unwrap().parse().unwrap();
         port
     };
@@ -155,7 +179,6 @@ fn test_static_included() {
 #[test]
 #[serial]
 fn test_dynamic_included() {
-
     build_test_dynamic();
 
     let test_dynamic_exe = PathBuf::from(CARGO_TARGET_TMPDIR).join("test_dynamic.bin");
@@ -168,7 +191,12 @@ fn test_dynamic_included() {
 
     let port = {
         let mut array = [0u8; 32];
-        let len = test_dynamic.stdout.as_ref().unwrap().read(&mut array).unwrap();
+        let len = test_dynamic
+            .stdout
+            .as_ref()
+            .unwrap()
+            .read(&mut array)
+            .unwrap();
         let port: u16 = str::from_utf8(&array[..len]).unwrap().parse().unwrap();
         port
     };

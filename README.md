@@ -28,7 +28,7 @@ Just include `memfd-exec = "0.1.4"` in your `Cargo.toml` file.
 ### Run an executable downloaded over the network
 
 For redteamers, this example will download and run an executable without ever writing it
-to disk. It may not bypass Advanced Thread Protection, but it at least won't leave
+to disk. It may not bypass Advanced Threat Protection, but it at least won't leave
 a huge disk footprint!
 
 ```rust
@@ -96,3 +96,14 @@ fn main() {
     println!("Got output: {:?}", output.stdout);
 }
 ```
+
+## Testing
+
+For testing purposes, you need to install:
+
+- `clang`
+- `glibc-static`
+- `glibc`
+
+You should also have `/bin/cat` and `/bin/ls` on your system. This is default on the
+vast majority of Linux systems, but don't panic if this test fails if they are missing.
