@@ -24,7 +24,7 @@
 //! // The `MemFdExecutable` struct is at near feature-parity with `std::process::Command`,
 //! // so you can use it in the same way. The only difference is that you must provide the
 //! // executable contents as a `Vec<u8>` as well as telling it the argv[0] to use.
-//! let qemu = MemFdExecutable::new("qemu-x86_64", resp.bytes().unwrap().to_vec())
+//! let qemu = MemFdExecutable::new("qemu-x86_64", resp.bytes().unwrap().as_ref())
 //!     // We'll just get the version here, but you can do anything you want with the
 //!     // args.
 //!     .arg("-version")
