@@ -1,14 +1,14 @@
 //! Test the `ls` command from the local system
 
 use std::{
-    env::var,
     fs::read,
-    io::Write,
+    io::{Write, Read},
     net::{SocketAddr, TcpStream},
     path::PathBuf,
     process::{Command, Stdio as ProcessStdio},
     thread::{sleep, spawn},
     time::Duration,
+    str,
 };
 
 use serial_test::serial;
@@ -66,7 +66,7 @@ fn build_test_dynamic() {
 #[test]
 fn test_ls() {
     let ls_contents = read("/bin/ls").expect("Could not read /bin/ls");
-    let _ls = MemFdExecutable::new("ls", ls_contents)
+    let _ls = MemFdExecutable::new("ls", &ls_contents)
         .arg(".")
         .spawn()
         .expect("Failed to run ls");
@@ -75,7 +75,7 @@ fn test_ls() {
 #[test]
 fn test_cat_simple() {
     let cat_contents = read("/bin/cat").expect("Could not read /bin/cat");
-    let _cat = MemFdExecutable::new("cat", cat_contents)
+    let _cat = MemFdExecutable::new("cat", &cat_contents)
         .arg("Cargo.toml")
         .spawn()
         .expect("Failed to run cat");
@@ -84,7 +84,7 @@ fn test_cat_simple() {
 #[test]
 fn test_cat_stdin() {
     let cat_contents = read("/bin/cat").expect("Could not read /bin/cat");
-    let mut cat = MemFdExecutable::new("cat", cat_contents)
+    let mut cat = MemFdExecutable::new("cat", &cat_contents)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
@@ -110,18 +110,22 @@ fn test_cat_stdin() {
 #[test]
 #[serial]
 fn test_static_included() {
-    const PORT: u32 = 5432;
-
     build_test_static();
 
     let test_static_exe = PathBuf::from(CARGO_TARGET_TMPDIR).join("test_static.bin");
     let test_static_exe_contents = read(test_static_exe).expect("Could not read static exe");
 
-    let test_static = MemFdExecutable::new("test_static.bin", test_static_exe_contents)
-        .arg(format!("{}", PORT))
+    let test_static = MemFdExecutable::new("test_static.bin", &test_static_exe_contents)
         .stdout(Stdio::piped())
         .spawn()
         .expect("Failed to spawn test_static");
+
+    let port = {
+        let mut array = [0u8; 32];
+        let len = test_static.stdout.as_ref().unwrap().read(&mut array).unwrap();
+        let port: u16 = str::from_utf8(&array[..len]).unwrap().parse().unwrap();
+        port
+    };
 
     let output_thread = spawn(move || {
         let output = test_static
@@ -135,41 +139,42 @@ fn test_static_included() {
         );
     });
 
-    let sock: SocketAddr = format!("127.0.0.1:{}", PORT)
+    let sock: SocketAddr = format!("127.0.0.1:{}", port)
         .parse()
         .expect("Failed to parse socket address");
 
-    for _ in 0..10 {
-        if let Ok(mut stream) = TcpStream::connect(sock) {
-            stream
-                .write_all(b"Hello, world!\n\n")
-                .expect("Failed to write to socket");
-            drop(stream);
-            break;
-        }
-        sleep(Duration::from_millis(100));
-    }
+    let mut stream = TcpStream::connect(sock).unwrap();
+    stream
+        .write_all(b"Hello, world!\n\n")
+        .expect("Failed to write to socket");
+    drop(stream);
+
     output_thread.join().expect("Failed to join output thread");
 }
 
 #[test]
 #[serial]
 fn test_dynamic_included() {
-    const PORT: u32 = 2345;
 
     build_test_dynamic();
 
     let test_dynamic_exe = PathBuf::from(CARGO_TARGET_TMPDIR).join("test_dynamic.bin");
     let test_dynamic_exe_contents = read(test_dynamic_exe).expect("Could not read dynamic exe");
 
-    let test_static = MemFdExecutable::new("test_dynamic.bin", test_dynamic_exe_contents)
-        .arg(format!("{}", PORT))
+    let test_dynamic = MemFdExecutable::new("test_dynamic.bin", &test_dynamic_exe_contents)
         .stdout(Stdio::piped())
         .spawn()
         .expect("Failed to spawn test_dynamic");
 
+    let port = {
+        let mut array = [0u8; 32];
+        let len = test_dynamic.stdout.as_ref().unwrap().read(&mut array).unwrap();
+        let port: u16 = str::from_utf8(&array[..len]).unwrap().parse().unwrap();
+        port
+    };
+
     let output_thread = spawn(move || {
-        let output = test_static
+        let output = test_dynamic
             .wait_with_output()
             .expect("Failed to run test_dynamic");
         assert!(
@@ -180,7 +185,7 @@ fn test_dynamic_included() {
         );
     });
 
-    let sock: SocketAddr = format!("127.0.0.1:{}", PORT)
+    let sock: SocketAddr = format!("127.0.0.1:{}", port)
         .parse()
         .expect("Failed to parse socket address");
 
@@ -212,7 +217,6 @@ fn test_dynamic_included() {
 //         "qemu-x86_64",
 //         resp.bytes()
 //             .expect("Could not get bytes from qemu download")
-//             .to_vec(),
 //     )
 //     // We'll just get the version here, but you can do anything you want with the
 //     // args.

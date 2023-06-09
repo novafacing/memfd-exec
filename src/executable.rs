@@ -67,11 +67,11 @@ use crate::{
 /// // Then, we can wait for the program to exit.
 /// cmd.wait();
 /// ```
-pub struct MemFdExecutable {
+pub struct MemFdExecutable<'a> {
     /// The contents of the ELF executable to run. This content can be included in the file
     /// using the `include_bytes!()` macro, or you can do fancy things like read it in from
     /// a socket.
-    code: Vec<u8>,
+    code: &'a [u8],
     /// The name of the program, this value is the argv\[0\] argument to the binary when
     /// executed. If the program expects something specific here, that value should be
     /// used, otherwise any name will do
@@ -125,7 +125,7 @@ fn construct_envp(env: BTreeMap<OsString, OsString>, saw_nul: &mut bool) -> Vec<
     result
 }
 
-impl MemFdExecutable {
+impl<'a> MemFdExecutable<'a> {
     /// Create a new MemFdExecutable with the given name and code. The name is the name of the
     /// program, and is used as the argv\[0\] argument to the program. The code is the binary
     /// code to execute (usually, the entire contents of an ELF file).
@@ -148,7 +148,7 @@ impl MemFdExecutable {
     ///     .expect("failed to execute process");
     /// ```
     ///
-    pub fn new<S: AsRef<OsStr>>(name: S, code: Vec<u8>) -> Self {
+    pub fn new<S: AsRef<OsStr>>(name: S, code: &'a [u8]) -> Self {
         let mut saw_nul = false;
         let name = os2c(name.as_ref(), &mut saw_nul);
         Self {
@@ -242,7 +242,7 @@ impl MemFdExecutable {
     ///
     /// use memfd_exec::{MemFdExecutable, Stdio};
     ///
-    /// let mut cat_cmd = MemFdExecutable::new("cat", include_bytes!("/bin/cat").to_vec())
+    /// let mut cat_cmd = MemFdExecutable::new("cat", include_bytes!("/bin/cat"))
     ///    .stdin(Stdio::piped())
     ///    .stdout(Stdio::null())
     ///    .spawn()
@@ -278,7 +278,7 @@ impl MemFdExecutable {
     ///
     /// use memfd_exec::{MemFdExecutable, Stdio};
     ///
-    /// let mut cat = MemFdExecutable::new("cat", read("/bin/cat").unwrap())
+    /// let mut cat = MemFdExecutable::new("cat", &read("/bin/cat").unwrap())
     ///     .stdin(Stdio::piped())
     ///     .stdout(Stdio::piped())
     ///     .spawn()
@@ -545,7 +545,7 @@ impl MemFdExecutable {
         )
         .unwrap();
 
-        if let Ok(n) = write(mfd, &self.code[..]) {
+        if let Ok(n) = write(mfd, self.code) {
             if n != self.code.len() {
                 return Err(Error::new(
                     ErrorKind::BrokenPipe,
