@@ -62,4 +62,5 @@ mod stdio;
 pub use child::Child;
 pub use executable::MemFdExecutable;
 pub use output::Output;
+pub use process::ExitStatus;
 pub use stdio::Stdio;
