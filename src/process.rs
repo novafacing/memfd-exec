@@ -124,22 +124,24 @@ impl ExitStatus {
     }
 
     /// If the process was terminated by a signal, says whether it dumped core.
-    ///
-    /// If the process was terminated by a signal, says whether it dumped core.
     pub fn core_dumped(&self) -> bool {
         libc::WIFSIGNALED(self.0) && libc::WCOREDUMP(self.0)
     }
 
     /// If the process was stopped by a signal, returns that signal.
     ///
-    /// In other words, if WIFSTOPPED, this returns WSTOPSIG. This is only possible if the status came from a wait system call which was passed WUNTRACED, and was then converted into an ExitStatus.
+    /// In other words, if WIFSTOPPED, this returns WSTOPSIG.
+    /// This is only possible if the status came from a wait system call
+    /// which was passed WUNTRACED, and was then converted into an ExitStatus.
     pub fn stopped_signal(&self) -> Option<i32> {
         libc::WIFSTOPPED(self.0).then(|| libc::WSTOPSIG(self.0))
     }
 
     /// Whether the process was continued from a stopped status.
     ///
-    /// Ie, WIFCONTINUED. This is only possible if the status came from a wait system call which was passed WCONTINUED, and was then converted into an ExitStatus.
+    /// Ie, WIFCONTINUED. This is only possible if the status came from a
+    /// wait system call which was passed WCONTINUED, and was then converted
+    /// into an ExitStatus.
     pub fn continued(&self) -> bool {
         libc::WIFCONTINUED(self.0)
     }
