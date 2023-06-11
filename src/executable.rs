@@ -67,6 +67,7 @@ use crate::{
 /// // Then, we can wait for the program to exit.
 /// cmd.wait();
 /// ```
+#[derive(Debug)]
 pub struct MemFdExecutable<'a> {
     /// The contents of the ELF executable to run. This content can be included in the file
     /// using the `include_bytes!()` macro, or you can do fancy things like read it in from
@@ -94,6 +95,7 @@ pub struct MemFdExecutable<'a> {
     saw_nul: bool,
 }
 
+#[derive(Debug)]
 struct Argv(Vec<CString>);
 
 unsafe impl Send for Argv {}
