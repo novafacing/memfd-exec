@@ -75,6 +75,7 @@ impl Child {
     }
 }
 
+/// A handle to a child process’s standard input (stdin).
 pub struct ChildStdin(AnonPipe);
 
 impl Write for ChildStdin {
@@ -131,6 +132,8 @@ impl Debug for ChildStdin {
         f.debug_struct("ChildStdin").finish_non_exhaustive()
     }
 }
+
+/// A handle to a child process’s standard output (stdout).
 pub struct ChildStdout(AnonPipe);
 
 impl Write for ChildStdout {
@@ -216,7 +219,9 @@ impl Debug for ChildStdout {
     }
 }
 
+/// A handle to a child process’s stderr.
 pub struct ChildStderr(AnonPipe);
+
 impl Write for ChildStderr {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         (&*self).write(buf)
