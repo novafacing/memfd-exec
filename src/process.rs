@@ -99,6 +99,14 @@ impl ExitStatus {
         }
     }
 
+    /// Was termination successful?
+    ///
+    /// Signal termination is not considered a success, and success is defined
+    /// as a zero exit status.
+    pub fn success(&self) -> bool {
+        self.exit_ok().is_ok()
+    }
+
     pub fn code(&self) -> Option<i32> {
         self.exited().then(|| libc::WEXITSTATUS(self.0))
     }
