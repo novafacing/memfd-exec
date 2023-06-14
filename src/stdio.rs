@@ -29,6 +29,7 @@ pub enum ChildStdio {
 }
 
 /// Description of a stdio stream for a child process
+#[derive(Debug)]
 pub enum Stdio {
     /// Inherit the parent's stdio stream
     Inherit,

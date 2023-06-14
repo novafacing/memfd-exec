@@ -75,7 +75,15 @@ impl Child {
     }
 }
 
+/// A handle to a child process’s standard input (stdin).
 pub struct ChildStdin(AnonPipe);
+
+impl std::os::fd::AsRawFd for ChildStdin {
+    #[inline]
+    fn as_raw_fd(&self) -> std::os::fd::RawFd {
+        self.0.as_raw_fd()
+    }
+}
 
 impl Write for ChildStdin {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
@@ -131,7 +139,16 @@ impl Debug for ChildStdin {
         f.debug_struct("ChildStdin").finish_non_exhaustive()
     }
 }
+
+/// A handle to a child process’s standard output (stdout).
 pub struct ChildStdout(AnonPipe);
+
+impl std::os::fd::AsRawFd for ChildStdout {
+    #[inline]
+    fn as_raw_fd(&self) -> std::os::fd::RawFd {
+        self.0.as_raw_fd()
+    }
+}
 
 impl Write for ChildStdout {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
@@ -216,7 +233,16 @@ impl Debug for ChildStdout {
     }
 }
 
+/// A handle to a child process’s stderr.
 pub struct ChildStderr(AnonPipe);
+
+impl std::os::fd::AsRawFd for ChildStderr {
+    #[inline]
+    fn as_raw_fd(&self) -> std::os::fd::RawFd {
+        self.0.as_raw_fd()
+    }
+}
+
 impl Write for ChildStderr {
     fn write(&mut self, buf: &[u8]) -> Result<usize> {
         (&*self).write(buf)
