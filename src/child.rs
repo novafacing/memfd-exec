@@ -75,6 +75,7 @@ impl Child {
     }
 }
 
+/// A handle to a child process’s standard input (stdin).
 pub struct ChildStdin(AnonPipe);
 
 impl std::os::fd::AsRawFd for ChildStdin {
@@ -138,6 +139,8 @@ impl Debug for ChildStdin {
         f.debug_struct("ChildStdin").finish_non_exhaustive()
     }
 }
+
+/// A handle to a child process’s standard output (stdout).
 pub struct ChildStdout(AnonPipe);
 
 impl std::os::fd::AsRawFd for ChildStdout {
@@ -230,6 +233,7 @@ impl Debug for ChildStdout {
     }
 }
 
+/// A handle to a child process’s stderr.
 pub struct ChildStderr(AnonPipe);
 
 impl std::os::fd::AsRawFd for ChildStderr {
