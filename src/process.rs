@@ -101,6 +101,14 @@ impl ExitStatus {
         }
     }
 
+    /// Was termination successful?
+    ///
+    /// Signal termination is not considered a success, and success is defined
+    /// as a zero exit status.
+    pub fn success(&self) -> bool {
+        self.exit_ok().is_ok()
+    }
+
     /// Returns the exit code of the process, if any.
     ///
     /// In Unix terms the return value is the exit status:
