@@ -10,7 +10,7 @@ readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dev-dependencies]
 tempfile = "3.5.0"
-reqwest = { version = "0.11.18", features = ["blocking"] }
+reqwest = { version = "0.12.3", features = ["blocking"] }
 serial_test = "2.0.0"
 
 [dependencies]
