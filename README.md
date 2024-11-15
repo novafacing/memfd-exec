@@ -40,7 +40,7 @@ let resp = get(URL).unwrap();
 
 // The `MemFdExecutable` struct is at near feature-parity with `std::process::Command`,
 // so you can use it in the same way. The only difference is that you must provide the
-// executable contents as a `Vec<u8>` as well as telling it the argv[0] to use.
+// argv[0] to use as well as the executable contents as a byte slice.
 let qemu = MemFdExecutable::new("qemu-x86_64", resp.bytes().unwrap().to_vec())
     // We'll just get the version here, but you can do anything you want with the
     // args.
